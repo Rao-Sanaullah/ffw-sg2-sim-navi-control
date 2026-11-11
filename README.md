@@ -1,4 +1,4 @@
-# FFW-SG2 Sim Control Panel
+# FFW-SG2 SLAM mapping GUI for Sim-based Control Panel
 
 A one-window GUI for **SLAM mapping** and **saved-map navigation (Nav2 + AMCL)** of the ROBOTIS FFW-SG2 in Gazebo.
 
