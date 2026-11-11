@@ -4,7 +4,7 @@ A one-window GUI for **SLAM mapping** and **saved-map navigation (Nav2 + AMCL)**
 
 This repo contains only the GUI and its launcher. No ROBOTIS code is included; get ai_worker from the official repository: **https://github.com/ROBOTIS-GIT/ai_worker** (branch `jazzy`).
 
-**Project page and videos:** see `index.html` (published via GitHub Pages).
+**Project page and videos:** see `index.html` (https://rao-sanaullah.github.io/ffw-sg2-sim-navi-control/).
 
 ## Files
 
