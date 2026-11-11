@@ -255,14 +255,12 @@ python3 /root/ros2_ws/src/ai_worker/sim_control_panel.py</pre>
 </footer>
 
 <script>
-  // Show a placeholder until the video file is uploaded.
+  // Show the placeholder only if the video really fails to load.
   document.querySelectorAll('.video-box').forEach(function (box) {
     var v = box.querySelector('video');
     var src = v.querySelector('source');
-    var mark = function () { box.classList.add('missing'); };
-    src.addEventListener('error', mark);
-    v.addEventListener('error', mark);
-    if (v.networkState === 3) mark(); // NETWORK_NO_SOURCE
+    src.addEventListener('error', function () { box.classList.add('missing'); });
+    v.addEventListener('loadeddata', function () { box.classList.remove('missing'); });
   });
 </script>
 </body>
