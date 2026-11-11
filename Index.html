@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FFW-SG2 Sim Control Panel</title>
+<meta name="description" content="One-window GUI for SLAM mapping and saved-map navigation of the ROBOTIS FFW-SG2 in Gazebo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf9f6; --bg2: #f0eeea; --surface: #ffffff; --text: #1a1a1a; --muted: #5a5a5a;
+    --border: #e8e6e0; --accent: #1a6b4f; --accent-soft: #e8f5ef;
+    --blue: #1a5fa5; --blue-soft: #edf4fc;
+    --code-bg: #f3f1ec; --code-text: #1a1a1a; --warn: #9a6b10;
+    --serif: 'Source Serif 4', Georgia, serif;
+    --sans: 'Manrope', system-ui, sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6; font-size: 16px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+
+  /* nav */
+  nav { position: sticky; top: 0; z-index: 10; background: rgba(250,249,246,.9);
+        backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 12px; }
+  nav .brand { font-family: var(--serif); color: var(--accent); font-size: 18px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+  nav .links { display: flex; gap: 18px; overflow-x: auto; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; white-space: nowrap; }
+  nav a:hover { color: var(--text); }
+
+  /* hero */
+  header.hero { padding: 64px 0 40px; text-align: center; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+         color: var(--accent); background: var(--accent-soft); padding: 4px 10px; border-radius: 999px; }
+  h1 { font-family: var(--serif); font-size: clamp(30px, 5vw, 46px); line-height: 1.12; letter-spacing: -0.02em; margin: 16px 0 14px; }
+  .lead { font-size: 18px; color: var(--muted); max-width: 680px; margin: 0 auto; }
+  .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 26px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px;
+         font-weight: 600; font-size: 14px; text-decoration: none; border: 1px solid var(--border);
+         color: var(--text); background: var(--surface); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn:hover { filter: brightness(1.05); }
+
+  section { padding: 40px 0; border-top: 1px solid var(--border); }
+  h2 { font-family: var(--serif); font-size: 26px; letter-spacing: -0.01em; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+
+  /* videos */
+  .videos { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  @media (min-width: 820px) { .videos { grid-template-columns: 1fr 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .video-box { position: relative; aspect-ratio: 16 / 9; background: var(--bg2); }
+  .video-box video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
+  .placeholder { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center;
+                 justify-content: center; gap: 6px; text-align: center; padding: 16px;
+                 background: repeating-linear-gradient(45deg, var(--bg2), var(--bg2) 12px, #f6f4ef 12px, #f6f4ef 24px);
+                 color: var(--muted); font-size: 14px; }
+  .placeholder code { color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .video-box.missing video { display: none; }
+  .video-box.missing .placeholder { display: flex; }
+  .card .body { padding: 16px 18px 18px; }
+  .card h3 { margin: 0 0 4px; font-size: 17px; }
+  .step-n { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  /* features */
+  .grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 640px) { .grid { grid-template-columns: 1fr 1fr; } }
+  .feat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .feat b { display: block; margin-bottom: 2px; }
+  .feat span { color: var(--muted); font-size: 14px; }
+
+  /* steps */
+  ol.steps { margin: 0; padding-left: 22px; }
+  ol.steps li { margin: 6px 0; }
+  .two { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  @media (min-width: 760px) { .two { grid-template-columns: 1fr 1fr; } }
+  h4 { margin: 0 0 8px; font-size: 15px; }
+
+  pre { border: 1px solid var(--border); background: var(--code-bg); color: var(--code-text); border-radius: 12px; padding: 16px 18px;
+        overflow-x: auto; font: 13.5px/1.6 'JetBrains Mono', monospace; margin: 0 0 14px; }
+  pre .c { color: #8a8a8a; }
+  code.inline { font-family: 'JetBrains Mono', monospace; font-size: 13.5px; background: var(--accent-soft);
+                padding: 1px 6px; border-radius: 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+
+  .note { border-left: 3px solid var(--warn); background: var(--surface); padding: 12px 16px; border-radius: 0 10px 10px 0;
+          font-size: 14px; color: var(--muted); margin-top: 18px; }
+
+  footer { padding: 32px 0 48px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">FFW-SG2 Sim Control</div>
+    <div class="links">
+      <a href="#videos">Videos</a>
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a href="#usage">Usage</a>
+      <a href="#troubleshooting">Help</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="tag">Gazebo · Nav2 · ROS 2 Jazzy</span>
+    <h1>One window to map and navigate the FFW-SG2 in simulation</h1>
+    <p class="lead">A lightweight GUI for SLAM mapping, saving and loading maps, and Nav2 + AMCL navigation of the ROBOTIS FFW-SG2 in Gazebo. It's an add-on for the official ai_worker repository.</p>
+    <div class="cta">
+      <a class="btn primary" href="#videos">Watch the demos</a>
+      <a class="btn" href="https://github.com/ROBOTIS-GIT/ai_worker" target="_blank" rel="noopener">Official ai_worker ↗</a>
+    </div>
+  </div>
+</header>
+
+<section id="videos">
+  <div class="wrap">
+    <h2>Demo videos</h2>
+    <p class="sub">The full workflow: build a map, then navigate on it.</p>
+    <div class="videos">
+      <div class="card">
+        <div class="video-box">
+          <video controls preload="metadata" playsinline>
+            <source src="videos/create_map.mp4" type="video/mp4">
+          </video>
+          <div class="placeholder">Video coming soon<code>videos/create_map.mp4</code></div>
+        </div>
+        <div class="body">
+          <h3><span class="step-n">1</span>Create a map</h3>
+          <p>Start SLAM, drive the robot around the world, and save the map.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="video-box">
+          <video controls preload="metadata" playsinline>
+            <source src="videos/use_map_navigation.mp4" type="video/mp4">
+          </video>
+          <div class="placeholder">Video coming soon<code>videos/use_map_navigation.mp4</code></div>
+        </div>
+        <div class="body">
+          <h3><span class="step-n">2</span>Navigate on a saved map</h3>
+          <p>Load the map, set the pose estimate, and send navigation goals.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <h2>Features</h2>
+    <p class="sub">Everything runs from one panel, so there are no terminals to juggle.</p>
+    <div class="grid">
+      <div class="feat"><b>SLAM mapping</b><span>Launches Gazebo, the FFW-SG2, SLAM and RViz with one click.</span></div>
+      <div class="feat"><b>Saved-map navigation</b><span>Relaunches with Nav2 + AMCL on the map you select.</span></div>
+      <div class="feat"><b>Map management</b><span>Save, list, load and delete maps with confirmation.</span></div>
+      <div class="feat"><b>Manual drive</b><span>Pad or W/S, A/D, Q/E keys to <code class="inline">/cmd_vel</code>. Silent when idle, so it never fights Nav2.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2>Installation</h2>
+    <p class="sub">This project contains only <code class="inline">sim_control_panel.py</code> and <code class="inline">run_nav_sim.sh</code>. Get ai_worker from the official repository.</p>
+<pre><span class="c"># 1. Official ai_worker (branch jazzy)</span>
+git clone -b jazzy https://github.com/ROBOTIS-GIT/ai_worker.git
+
+<span class="c"># 2. Add the two files to its root</span>
+cp sim_control_panel.py run_nav_sim.sh ai_worker/
+chmod +x ai_worker/run_nav_sim.sh
+
+<span class="c"># 3. Start and enter the container</span>
+cd ai_worker
+./docker/container.sh start
+./docker/container.sh enter
+
+<span class="c"># 4. Inside the container (once)</span>
+apt-get update &amp;&amp; apt-get install -y python3-tk</pre>
+<pre><span class="c"># Run the panel (inside the container)</span>
+export GZ_IP=127.0.0.1
+python3 /root/ros2_ws/src/ai_worker/sim_control_panel.py</pre>
+    <p class="sub" style="margin:0">Tested with ai_worker 1.3.2 (<code class="inline">jazzy</code>).</p>
+  </div>
+</section>
+
+<section id="usage">
+  <div class="wrap">
+    <h2>Usage</h2>
+    <p class="sub">Use the panel to control everything; RViz is for pose and goals; Gazebo is for watching.</p>
+    <div class="two">
+      <div>
+        <h4>1 · Create a map</h4>
+        <ol class="steps">
+          <li>Press <b>Start mapping (SLAM)</b> and wait about 30–60 s.</li>
+          <li>Click the panel and drive with <b>W/S</b>, <b>A/D</b>, <b>Q/E</b>.</li>
+          <li>Map every area you need until it's white in RViz.</li>
+          <li>Set a new name in <b>Save to</b>, e.g. <code class="inline">…/maps/room1</code>.</li>
+          <li>Press <b>Save Map</b> while SLAM is still running, then <b>⟳</b>.</li>
+        </ol>
+      </div>
+      <div>
+        <h4>2 · Navigate</h4>
+        <ol class="steps">
+          <li>Pick the map in <b>Load map</b>.</li>
+          <li>Press <b>Start saved-map nav</b>.</li>
+          <li>In RViz, set <b>2D Pose Estimate</b> where the robot is.</li>
+          <li>Set a <b>2D Goal Pose</b> on a white (free) area.</li>
+          <li>To remove a map: <b>Stop all</b>, select it, then <b>🗑 Delete</b>.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="troubleshooting">
+  <div class="wrap">
+    <h2>Troubleshooting</h2>
+    <p class="sub">Logs are in <code class="inline">/tmp/nav_sim_logs/</code>.</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Problem</th><th>Fix</th></tr>
+        <tr><td>Gazebo world doesn't load</td><td><code class="inline">export GZ_IP=127.0.0.1</code> before starting the panel.</td></tr>
+        <tr><td>Panel file not found in the container</td><td>Stale mount: <code class="inline">./docker/container.sh stop</code>, then <code class="inline">start</code> and <code class="inline">enter</code>.</td></tr>
+        <tr><td>Robot doesn't move after saved-map nav</td><td>Expected. Set <b>2D Pose Estimate</b>, then <b>2D Goal Pose</b>.</td></tr>
+        <tr><td><code class="inline">Failed to create plan</code></td><td>The goal is unmapped or blocked. Pick a white cell or map that area first.</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Independent project, not affiliated with or endorsed by ROBOTIS. FFW-SG2 and ai_worker belong to ROBOTIS Co., Ltd. under their own license; see the
+    <a href="https://github.com/ROBOTIS-GIT/ai_worker" target="_blank" rel="noopener">official repository</a>.
+    This project's code is released under Apache-2.0.
+    <p style="margin:8px 0 0">Designed by <strong style="color:var(--text)">Sanaullah</strong></p>
+  </div>
+</footer>
+
+<script>
+  // Show a placeholder until the video file is uploaded.
+  document.querySelectorAll('.video-box').forEach(function (box) {
+    var v = box.querySelector('video');
+    var src = v.querySelector('source');
+    var mark = function () { box.classList.add('missing'); };
+    src.addEventListener('error', mark);
+    v.addEventListener('error', mark);
+    if (v.networkState === 3) mark(); // NETWORK_NO_SOURCE
+  });
+</script>
+</body>
+</html>
